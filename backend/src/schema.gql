@@ -1,0 +1,104 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateEventInput {
+  date: String!
+  location: String!
+  name: String!
+}
+
+input CreateFightInput {
+  blueCornerId: Int!
+  eventId: Int!
+  redCornerId: Int!
+}
+
+input CreateFighterInput {
+  birthDate: String!
+  fullName: String!
+  height: Float!
+  nickname: String!
+  team: String!
+  weight: Float!
+  weightClassId: Int!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type EventOutput {
+  date: DateTime!
+  id: Int!
+  location: String!
+  name: String!
+}
+
+enum FightMethod {
+  DECISION
+  DRAW
+  KO
+  SUBMISSION
+}
+
+type FightOutput {
+  blueCornerId: Int!
+  duration: String
+  eventId: Int!
+  id: Int!
+  method: FightMethod
+  redCornerId: Int!
+  round: Float
+  winnerId: Int
+}
+
+type FighterOutput {
+  birthDate: DateTime!
+  fullName: String!
+  height: Float!
+  id: Int!
+  nickname: String!
+  team: String!
+  weight: Float!
+  weightClassId: Int!
+}
+
+type Mutation {
+  createEvent(input: CreateEventInput!): EventOutput!
+  createFight(input: CreateFightInput!): FightOutput!
+  createFighter(input: CreateFighterInput!): FighterOutput!
+  recordFightResult(input: RecordFightResultInput!): FightOutput!
+}
+
+type Query {
+  getEventById(id: Float!): EventOutput
+  getEvents: [EventOutput!]!
+  getFighterById(id: Float!): FighterOutput
+  getFighters: [FighterOutput!]!
+  getFights: [FightOutput!]!
+  rankingsByWeightClass(weightClassId: Int!): [RankingOutput!]!
+  topRankedFighters: [RankingOutput!]!
+}
+
+type RankingOutput {
+  draws: Int!
+  fighterId: Int!
+  fighterName: String!
+  id: Int!
+  lastFightDate: DateTime
+  losses: Int!
+  points: Int!
+  weightClassId: Int!
+  weightClassName: String!
+  wins: Int!
+}
+
+input RecordFightResultInput {
+  duration: String!
+  fightId: Int!
+  method: FightMethod!
+  round: Int!
+  winnerId: Int!
+}

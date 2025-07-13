@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    container_name: mma_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: mma
+      POSTGRES_PASSWORD: mma123
+      POSTGRES_DB: mma_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: mma_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:
