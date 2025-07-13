@@ -83,6 +83,7 @@ type Query {
   fighterStats(fighterId: Int!): FighterStatsOutput!
   fightsByFighterId(fighterId: Int!): [FightOutput!]!
   getEventById(id: Float!): EventOutput
+  getEventFightCard(eventId: Int!): [FightOutput!]!
   getEvents: [EventOutput!]!
   getFighterById(id: Float!): FighterOutput
   getFighters: [FighterOutput!]!
