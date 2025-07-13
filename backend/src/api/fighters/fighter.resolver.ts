@@ -1,9 +1,11 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { CreateFighterInput } from './dto/create-fighter.input';
 import { FighterOutput } from './dto/fighter.output';
+import { FighterStatsOutput } from './dto/fighter-stats.output';
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { FighterOrm } from 'infrastructure/database/typeorm/fighter.orm-entity';
+import { FightOrm } from 'infrastructure/database/typeorm/fight.orm-entity';
 import { InjectRepository } from '@nestjs/typeorm';
 
 @Resolver(() => FighterOutput)
@@ -12,6 +14,9 @@ export class FighterResolver {
   constructor(
     @InjectRepository(FighterOrm)
     private readonly fighterRepo: Repository<FighterOrm>,
+
+    @InjectRepository(FightOrm)
+    private readonly fightRepo: Repository<FightOrm>,
   ) {}
 
   @Mutation(() => FighterOutput)
@@ -41,6 +46,32 @@ export class FighterResolver {
     if (!f) return null;
 
     return mapFighterOrmToOutput(f);
+  }
+
+  @Query(() => FighterStatsOutput)
+  async fighterStats(
+    @Args('fighterId', { type: () => Int }) fighterId: number,
+  ): Promise<FighterStatsOutput> {
+    const fights = await this.fightRepo.find({
+      where: [
+        { redCorner: { id: fighterId } },
+        { blueCorner: { id: fighterId } },
+      ],
+      relations: ['winner'],
+    });
+
+    let wins = 0;
+    let losses = 0;
+    let draws = 0;
+
+    for (const fight of fights) {
+      if (!fight.winner) continue;
+
+      if (fight.winner.id === fighterId) wins++;
+      else losses++;
+    }
+
+    return { fighterId, wins, losses, draws };
   }
 }
 

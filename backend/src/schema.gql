@@ -65,6 +65,13 @@ type FighterOutput {
   weightClassId: Int!
 }
 
+type FighterStatsOutput {
+  draws: Int!
+  fighterId: Int!
+  losses: Int!
+  wins: Int!
+}
+
 type Mutation {
   createEvent(input: CreateEventInput!): EventOutput!
   createFight(input: CreateFightInput!): FightOutput!
@@ -73,6 +80,8 @@ type Mutation {
 }
 
 type Query {
+  fighterStats(fighterId: Int!): FighterStatsOutput!
+  fightsByFighterId(fighterId: Int!): [FightOutput!]!
   getEventById(id: Float!): EventOutput
   getEvents: [EventOutput!]!
   getFighterById(id: Float!): FighterOutput

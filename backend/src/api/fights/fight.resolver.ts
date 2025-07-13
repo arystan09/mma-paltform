@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Args, Query } from '@nestjs/graphql';
+import { Resolver, Mutation, Args, Query, Int } from '@nestjs/graphql';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FightOrm } from 'infrastructure/database/typeorm/fight.orm-entity';
 import { Repository } from 'typeorm';
@@ -14,7 +14,7 @@ export class FightResolver {
     private readonly fightRepo: Repository<FightOrm>,
   ) {}
 
-  // 🥊 Создание боя
+  // Создание боя
   @Mutation(() => FightOutput)
   async createFight(@Args('input') input: CreateFightInput): Promise<FightOutput> {
     const fight = this.fightRepo.create({
@@ -37,7 +37,7 @@ export class FightResolver {
     };
   }
 
-  // 🏆 Запись результата боя
+  // Запись результата боя
   @Mutation(() => FightOutput)
   async recordFightResult(
     @Args('input') input: RecordFightResultInput,
@@ -71,10 +71,35 @@ export class FightResolver {
     };
   }
 
-  // 📋 Получение списка всех боёв
+  // Получение списка всех боёв
   @Query(() => [FightOutput])
   async getFights(): Promise<FightOutput[]> {
     const fights = await this.fightRepo.find({
+      relations: ['event', 'redCorner', 'blueCorner', 'winner'],
+    });
+
+    return fights.map(f => ({
+      id: f.id,
+      eventId: f.event.id,
+      redCornerId: f.redCorner.id,
+      blueCornerId: f.blueCorner.id,
+      winnerId: f.winner?.id ?? undefined,
+      method: f.method ?? undefined,
+      round: f.round ?? undefined,
+      duration: f.duration ?? undefined,
+    }));
+  }
+
+  // История боёв бойца
+  @Query(() => [FightOutput])
+  async fightsByFighterId(
+    @Args('fighterId', { type: () => Int }) fighterId: number,
+  ): Promise<FightOutput[]> {
+    const fights = await this.fightRepo.find({
+      where: [
+        { redCorner: { id: fighterId } },
+        { blueCorner: { id: fighterId } },
+      ],
       relations: ['event', 'redCorner', 'blueCorner', 'winner'],
     });
 
