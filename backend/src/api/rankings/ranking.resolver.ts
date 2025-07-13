@@ -1,7 +1,7 @@
 import { Resolver, Query, Args, Int } from '@nestjs/graphql';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RankingOrm } from 'infrastructure/database/typeorm/ranking.orm-entity';
 import { Repository } from 'typeorm';
+import { RankingOrm } from 'infrastructure/database/typeorm/ranking.orm-entity';
 import { RankingOutput } from './dto/ranking.output';
 
 @Resolver(() => RankingOutput)
@@ -11,7 +11,10 @@ export class RankingResolver {
     private readonly rankingRepo: Repository<RankingOrm>,
   ) {}
 
-  @Query(() => [RankingOutput])
+  /**
+   * Получение рейтингов бойцов по весовой категории
+   */
+  @Query(() => [RankingOutput], { description: 'Получить рейтинг бойцов по вес-категории' })
   async rankingsByWeightClass(
     @Args('weightClassId', { type: () => Int }) weightClassId: number,
   ): Promise<RankingOutput[]> {
@@ -35,7 +38,10 @@ export class RankingResolver {
     }));
   }
 
-  @Query(() => [RankingOutput])
+  /**
+   * Получить ТОП-10 бойцов по общему рейтингу
+   */
+  @Query(() => [RankingOutput], { description: 'ТОП-10 бойцов с наибольшим рейтингом' })
   async topRankedFighters(): Promise<RankingOutput[]> {
     const data = await this.rankingRepo.find({
       relations: ['fighter', 'weightClass'],
