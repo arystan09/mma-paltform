@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { FighterOrm } from './fighter.orm-entity';
 import { WeightClassOrm } from './weight-class.orm-entity';
 
@@ -30,4 +30,12 @@ export class RankingOrm {
   @Column({ type: 'timestamp', nullable: true })
   lastFightDate: Date | null;
 
+  @Column({ type: 'int', nullable: true })
+  rank_position: number | null;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
 }

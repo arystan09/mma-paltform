@@ -8,6 +8,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { EventModule } from './api/events/event.module';
 import { FightModule } from './api/fights/fight.module';
 import { RankingModule } from './api/rankings/rankings.module';
+import { WeightClassModule } from './api/weight-class/weight-class.module';
 
 // TypeORM сущности
 import { FighterOrm } from './infrastructure/database/typeorm/fighter.orm-entity';
@@ -62,6 +63,7 @@ import { TestModule } from './test/test.module';
     EventModule,
     TestModule,
     RankingModule,
+    WeightClassModule,
   ],
   providers: [
     SeederService,

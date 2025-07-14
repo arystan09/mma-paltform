@@ -1,9 +1,10 @@
-import { ObjectType, Field, Int } from '@nestjs/graphql';
+import { ObjectType, Field, Int, ID } from '@nestjs/graphql';
+import { GraphQLISODateTime } from '@nestjs/graphql';
 
 @ObjectType()
 export class RankingOutput {
-  @Field(() => Int)
-  id: number;
+  @Field(() => ID)
+  id: string;
 
   @Field(() => Int)
   fighterId: number;
@@ -29,7 +30,13 @@ export class RankingOutput {
   @Field(() => Int)
   draws: number;
 
-  @Field(() => Date, { nullable: true })
-  lastFightDate: Date | null;
+  @Field(() => Int, { nullable: true })
+  rankPosition?: number;
 
+  // Временные метки
+  @Field(() => GraphQLISODateTime)
+  createdAt: Date;
+
+  @Field(() => GraphQLISODateTime)
+  updatedAt: Date;
 }

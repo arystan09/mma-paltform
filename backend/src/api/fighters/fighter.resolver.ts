@@ -80,10 +80,15 @@ function mapFighterOrmToOutput(f: FighterOrm): FighterOutput {
     id: f.id,
     fullName: f.fullName,
     nickname: f.nickname,
-    birthDate: f.birthDate,
+    birthDate: f.birthDate ? new Date(f.birthDate.toString()) : null,
     height: f.height,
     weight: f.weight,
     team: f.team,
     weightClassId: f.weightClass?.id ?? 0,
+    country: f.country ?? undefined,
+    reach_cm: f.reach_cm ?? undefined,
+    stance: f.stance ?? undefined,
+    created_at: f.created_at,
+    updated_at: f.updated_at,
   };
 }

@@ -12,13 +12,17 @@ input CreateFightInput {
   blueCornerId: Int!
   eventId: Int!
   redCornerId: Int!
+  weightClassId: Int!
 }
 
 input CreateFighterInput {
   birthDate: String!
+  country: String
   fullName: String!
   height: Float!
   nickname: String!
+  reach_cm: Float
+  stance: StanceType
   team: String!
   weight: Float!
   weightClassId: Int!
@@ -30,37 +34,50 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 scalar DateTime
 
 type EventOutput {
+  createdAt: DateTime!
   date: DateTime!
-  id: Int!
+  id: ID!
   location: String!
   name: String!
+  updatedAt: DateTime!
 }
 
 enum FightMethod {
   DECISION
+  DQ
   DRAW
   KO
   SUBMISSION
+  TKO
 }
 
 type FightOutput {
   blueCornerId: Int!
+  createdAt: DateTime!
   duration: String
   eventId: Int!
-  id: Int!
+  id: ID!
+  isFinished: Boolean!
   method: FightMethod
   redCornerId: Int!
   round: Float
+  updatedAt: DateTime!
+  weightClassId: Int!
   winnerId: Int
 }
 
 type FighterOutput {
-  birthDate: DateTime!
+  birthDate: DateTime
+  country: String
+  created_at: DateTime!
   fullName: String!
   height: Float!
   id: Int!
   nickname: String!
+  reach_cm: Int
+  stance: StanceType
   team: String!
+  updated_at: DateTime!
   weight: Float!
   weightClassId: Int!
 }
@@ -76,30 +93,43 @@ type Mutation {
   createEvent(input: CreateEventInput!): EventOutput!
   createFight(input: CreateFightInput!): FightOutput!
   createFighter(input: CreateFighterInput!): FighterOutput!
+
+  """Пересчитать рейтинги вручную"""
+  recalculateRankings: Boolean!
   recordFightResult(input: RecordFightResultInput!): FightOutput!
 }
 
 type Query {
   fighterStats(fighterId: Int!): FighterStatsOutput!
   fightsByFighterId(fighterId: Int!): [FightOutput!]!
-  getEventById(id: Float!): EventOutput
+  getAllWeightClasses: [WeightClassOutput!]!
+
+  """Получить событие по ID"""
+  getEventById(id: Int!): EventOutput
   getEventFightCard(eventId: Int!): [FightOutput!]!
   getEvents: [EventOutput!]!
   getFighterById(id: Float!): FighterOutput
   getFighters: [FighterOutput!]!
   getFights: [FightOutput!]!
+  getWeightClassById(id: Int!): WeightClassOutput!
+
+  """Получить рейтинг бойцов по вес-категории"""
   rankingsByWeightClass(weightClassId: Int!): [RankingOutput!]!
+
+  """ТОП-10 бойцов с наибольшим рейтингом"""
   topRankedFighters: [RankingOutput!]!
 }
 
 type RankingOutput {
+  createdAt: DateTime!
   draws: Int!
   fighterId: Int!
   fighterName: String!
-  id: Int!
-  lastFightDate: DateTime
+  id: ID!
   losses: Int!
   points: Int!
+  rankPosition: Int
+  updatedAt: DateTime!
   weightClassId: Int!
   weightClassName: String!
   wins: Int!
@@ -111,4 +141,18 @@ input RecordFightResultInput {
   method: FightMethod!
   round: Int!
   winnerId: Int!
+}
+
+enum StanceType {
+  OPEN
+  ORTHODOX
+  SOUTHPAW
+  SWITCH
+}
+
+type WeightClassOutput {
+  id: Int!
+  maxWeight: Int!
+  minWeight: Int!
+  name: String!
 }

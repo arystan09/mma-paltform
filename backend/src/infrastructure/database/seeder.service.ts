@@ -5,7 +5,8 @@ import { Repository } from 'typeorm';
 import { WeightClassOrm } from './typeorm/weight-class.orm-entity';
 import { FighterOrm } from './typeorm/fighter.orm-entity';
 import { EventOrm } from './typeorm/event.orm-entity';
-import { FightOrm, FightMethod } from './typeorm/fight.orm-entity';
+import { FightOrm } from './typeorm/fight.orm-entity';
+import { FightMethod } from '../../common/enums/fight-method.enum';
 
 @Injectable()
 export class SeederService implements OnApplicationBootstrap {
@@ -22,57 +23,82 @@ export class SeederService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     const existing = await this.fighterRepo.find();
-    if (existing.length > 0) return; // уже есть данные
+    if (existing.length > 0) return;
 
-    // 1. Весовая категория
-    const lightweight = this.weightRepo.create({
-      name: 'Lightweight',
-      minWeight: 65,
-      maxWeight: 70,
-    });
-    await this.weightRepo.save(lightweight);
+    // 1. Добавляем весовые категории
+    const weightClasses = await this.weightRepo.save([
+      { name: 'Flyweight', minWeight: 56, maxWeight: 57 },
+      { name: 'Bantamweight', minWeight: 58, maxWeight: 61 },
+      { name: 'Featherweight', minWeight: 62, maxWeight: 65 },
+      { name: 'Lightweight', minWeight: 66, maxWeight: 70 },
+      { name: 'Welterweight', minWeight: 71, maxWeight: 77 },
+      { name: 'Middleweight', minWeight: 78, maxWeight: 84 },
+      { name: 'Light Heavyweight', minWeight: 85, maxWeight: 93 },
+      { name: 'Heavyweight', minWeight: 94, maxWeight: 120 },
+    ]);
 
-    // 2. Бойцы
-    const fighter1 = this.fighterRepo.create({
-      fullName: 'John Smith',
-      nickname: 'The Hammer',
-      birthDate: new Date('1990-01-01'),
-      height: 180,
-      weight: 69,
-      team: 'Team Alpha',
-      weightClass: lightweight,
-    });
-    const fighter2 = this.fighterRepo.create({
-      fullName: 'Mike Johnson',
-      nickname: 'Iron Mike',
-      birthDate: new Date('1992-03-15'),
-      height: 178,
-      weight: 68,
-      team: 'Team Omega',
-      weightClass: lightweight,
-    });
-    await this.fighterRepo.save([fighter1, fighter2]);
+    // 2. Добавляем бойцов (по 2 на весовую категорию)
+    const fighters: FighterOrm[] = [];
 
-    // 3. Событие
+    for (let i = 0; i < weightClasses.length; i++) {
+      const wc = weightClasses[i];
+      const f1 = this.fighterRepo.create({
+        fullName: `Fighter ${i + 1}A`,
+        nickname: `The ${wc.name} A`,
+        birthDate: new Date(`199${i}-01-01`),
+        height: 170 + i,
+        weight: wc.minWeight + 1,
+        team: `Team ${i + 1}`,
+        weightClass: wc,
+      });
+
+      const f2 = this.fighterRepo.create({
+        fullName: `Fighter ${i + 1}B`,
+        nickname: `The ${wc.name} B`,
+        birthDate: new Date(`199${i}-02-01`),
+        height: 171 + i,
+        weight: wc.minWeight + 2,
+        team: `Team ${i + 1}`,
+        weightClass: wc,
+      });
+
+      fighters.push(f1, f2);
+    }
+
+    await this.fighterRepo.save(fighters);
+
+    // 3. Добавляем событие
     const event = this.eventRepo.create({
-      name: 'MMA Fight Night',
-      location: 'Las Vegas Arena',
+      name: 'UFC Seeded Event',
+      location: 'Madison Square Garden',
       date: new Date(),
     });
     await this.eventRepo.save(event);
 
-    // 4. Бой
-    const fight = this.fightRepo.create({
-      event,
-      redCorner: fighter1,
-      blueCorner: fighter2,
-      winner: fighter1,
-      method: FightMethod.KO,
-      round: 2,
-      duration: '2:45',
-    });
-    await this.fightRepo.save(fight);
+    // 4. Добавляем бои: каждый боец A дерется с бойцом B
+    const fights: FightOrm[] = [];
 
-    console.log('✅ Seeder: Data added!');
+    for (let i = 0; i < fighters.length; i += 2) {
+      const red = fighters[i];
+      const blue = fighters[i + 1];
+
+      const fight = this.fightRepo.create({
+        event,
+        redCorner: red,
+        blueCorner: blue,
+        weightClass: red.weightClass,
+        winner: red,
+        method: FightMethod.KO,
+        round: 2,
+        duration: '3:15',
+        is_finished: true,
+      });
+
+      fights.push(fight);
+    }
+
+    await this.fightRepo.save(fights);
+
+    console.log('✅ Seeder: Added 8 weight classes, 16 fighters, 8 fights!');
   }
 }

@@ -21,6 +21,7 @@ export class FightResolver {
       event: { id: input.eventId } as any,
       redCorner: { id: input.redCornerId } as any,
       blueCorner: { id: input.blueCornerId } as any,
+      weightClass: { id: input.weightClassId } as any,
     });
 
     const saved = await this.fightRepo.save(fight);
@@ -34,6 +35,10 @@ export class FightResolver {
       method: undefined,
       round: undefined,
       duration: undefined,
+      isFinished: saved.is_finished,
+      weightClassId: saved.weightClass.id,
+      createdAt: saved.created_at,
+      updatedAt: saved.updated_at,
     };
   }
 
@@ -44,9 +49,8 @@ export class FightResolver {
   ): Promise<FightOutput> {
     const fight = await this.fightRepo.findOne({
       where: { id: input.fightId },
-      relations: ['event', 'redCorner', 'blueCorner'],
+      relations: ['event', 'redCorner', 'blueCorner', 'weightClass', 'winner'],
     });
-
     if (!fight) {
       throw new Error(`Fight with ID ${input.fightId} not found`);
     }
@@ -55,9 +59,22 @@ export class FightResolver {
     fight.method = input.method;
     fight.round = input.round;
     fight.duration = input.duration;
+    await this.fightRepo.update(fight.id, {
+    winner: { id: input.winnerId } as any,
+    method: input.method,
+    round: input.round,
+    duration: input.duration,
+    is_finished: true,
+  });
 
-    const updated = await this.fightRepo.save(fight);
-    await rankingQueue.add('recalculate', {});
+    const updated = await this.fightRepo.findOne({
+      where: { id: fight.id },
+      relations: ['event', 'redCorner', 'blueCorner', 'winner', 'weightClass'],
+    });
+
+    if (!updated) {
+      throw new Error(`Fight with ID ${fight.id} was not found after update`);
+    }
 
     return {
       id: updated.id,
@@ -68,6 +85,10 @@ export class FightResolver {
       method: updated.method ?? undefined,
       round: updated.round ?? undefined,
       duration: updated.duration ?? undefined,
+      isFinished: updated.is_finished,
+      weightClassId: updated.weightClass.id,
+      createdAt: updated.created_at,
+      updatedAt: updated.updated_at,
     };
   }
 
@@ -75,7 +96,7 @@ export class FightResolver {
   @Query(() => [FightOutput])
   async getFights(): Promise<FightOutput[]> {
     const fights = await this.fightRepo.find({
-      relations: ['event', 'redCorner', 'blueCorner', 'winner'],
+      relations: ['event', 'redCorner', 'blueCorner', 'winner', 'weightClass'],
     });
 
     return fights.map(f => ({
@@ -87,6 +108,10 @@ export class FightResolver {
       method: f.method ?? undefined,
       round: f.round ?? undefined,
       duration: f.duration ?? undefined,
+      isFinished: f.is_finished,
+      weightClassId: f.weightClass?.id ?? null,
+      createdAt: f.created_at,
+      updatedAt: f.updated_at,
     }));
   }
 
@@ -100,7 +125,7 @@ export class FightResolver {
         { redCorner: { id: fighterId } },
         { blueCorner: { id: fighterId } },
       ],
-      relations: ['event', 'redCorner', 'blueCorner', 'winner'],
+      relations: ['event', 'redCorner', 'blueCorner', 'winner', 'weightClass'],
     });
 
     return fights.map(f => ({
@@ -112,6 +137,10 @@ export class FightResolver {
       method: f.method ?? undefined,
       round: f.round ?? undefined,
       duration: f.duration ?? undefined,
+      isFinished: f.is_finished,
+      weightClassId: f.weightClass?.id ?? null,
+      createdAt: f.created_at,
+      updatedAt: f.updated_at,
     }));
   }
 }

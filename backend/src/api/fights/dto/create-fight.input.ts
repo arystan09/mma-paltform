@@ -10,4 +10,7 @@ export class CreateFightInput {
 
   @Field(() => Int)
   blueCornerId: number;
+
+  @Field(() => Int)
+  weightClassId: number;
 }

@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { FighterOrm } from '../../infrastructure/database/typeorm/fighter.orm-entity';
-import { FightOrm, FightMethod } from '../../infrastructure/database/typeorm/fight.orm-entity';
+import { FightOrm } from '../../infrastructure/database/typeorm/fight.orm-entity';
+import { FightMethod } from '../../common/enums/fight-method.enum';
 import { RankingOrm } from '../../infrastructure/database/typeorm/ranking.orm-entity';
 
 export class CalculateRankingUseCase {
@@ -19,7 +20,7 @@ export class CalculateRankingUseCase {
           { redCorner: { id: fighter.id } },
           { blueCorner: { id: fighter.id } },
         ],
-        relations: ['winner'],
+        relations: ['winner', 'event'],
       });
 
       let wins = 0;
@@ -71,6 +72,42 @@ export class CalculateRankingUseCase {
         });
         await rankingRepo.save(newRank);
       }
+    }
+
+    // Расчёт rank_position
+    const allWeightClasses = await rankingRepo
+      .createQueryBuilder('r')
+      .leftJoinAndSelect('r.weightClass', 'weightClass')
+      .leftJoinAndSelect('r.fighter', 'fighter')
+      .getMany();
+
+    // ❗ Гарантируем, что объекты "живые" и будут отслеживаться при сохранении
+    for (const r of allWeightClasses) {
+      if (!r.rank_position) {
+        r.rank_position = null; // на всякий случай инициализация
+      }
+    }
+
+    const groupedByClass: { [key: string]: RankingOrm[] } = {};
+
+    for (const r of allWeightClasses) {
+      const key = r.weightClass.id;
+      if (!groupedByClass[key]) groupedByClass[key] = [];
+      groupedByClass[key].push(r);
+    }
+
+    for (const group of Object.values(groupedByClass)) {
+      const sorted = group.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (!a.lastFightDate || !b.lastFightDate) return 0;
+        return b.lastFightDate.getTime() - a.lastFightDate.getTime();
+      });
+
+      for (let i = 0; i < sorted.length; i++) {
+        sorted[i].rank_position = i + 1;
+      }
+
+      await rankingRepo.save(sorted);
     }
   }
 }

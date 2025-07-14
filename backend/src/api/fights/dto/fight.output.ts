@@ -1,13 +1,10 @@
-import { ObjectType, Field, Int, registerEnumType } from '@nestjs/graphql';
-import { FightMethod } from 'infrastructure/database/typeorm/fight.orm-entity';
-
-registerEnumType(FightMethod, {
-  name: 'FightMethod',
-});
+import { ObjectType, Field, Int, ID } from '@nestjs/graphql';
+import { GraphQLISODateTime } from '@nestjs/graphql';
+import { FightMethod } from '../../../common/enums/fight-method.enum';
 
 @ObjectType()
 export class FightOutput {
-  @Field(() => Int)
+  @Field(() => ID)
   id: number;
 
   @Field(() => Int)
@@ -30,4 +27,16 @@ export class FightOutput {
 
   @Field({ nullable: true })
   round?: number;
+
+  @Field(() => Boolean)
+  isFinished: boolean;
+
+  @Field(() => Int)
+  weightClassId: number;
+
+  @Field(() => GraphQLISODateTime)
+  createdAt: Date;
+
+  @Field(() => GraphQLISODateTime)
+  updatedAt: Date;
 }

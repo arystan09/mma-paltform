@@ -1,14 +1,17 @@
-import { Resolver, Query, Args, Int } from '@nestjs/graphql';
+import { Resolver, Query, Args, Int, Mutation } from '@nestjs/graphql';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { RankingOrm } from 'infrastructure/database/typeorm/ranking.orm-entity';
 import { RankingOutput } from './dto/ranking.output';
+import { CalculateRankingUseCase } from '../../application/rankings/calculate-ranking.usecase';
 
 @Resolver(() => RankingOutput)
 export class RankingResolver {
   constructor(
     @InjectRepository(RankingOrm)
     private readonly rankingRepo: Repository<RankingOrm>,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
@@ -25,7 +28,7 @@ export class RankingResolver {
     });
 
     return data.map(r => ({
-      id: r.id,
+      id: r.id.toString(),
       fighterId: r.fighter.id,
       fighterName: r.fighter.fullName,
       weightClassId: r.weightClass.id,
@@ -34,7 +37,9 @@ export class RankingResolver {
       wins: r.wins,
       losses: r.losses,
       draws: r.draws,
-      lastFightDate: r.lastFightDate,
+      rankPosition: r.rank_position ?? undefined,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
     }));
   }
 
@@ -50,7 +55,7 @@ export class RankingResolver {
     });
 
     return data.map(r => ({
-      id: r.id,
+      id: r.id.toString(),
       fighterId: r.fighter.id,
       fighterName: r.fighter.fullName,
       weightClassId: r.weightClass.id,
@@ -59,7 +64,19 @@ export class RankingResolver {
       wins: r.wins,
       losses: r.losses,
       draws: r.draws,
-      lastFightDate: r.lastFightDate,
+      rankPosition: r.rank_position ?? undefined,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
     }));
+  }
+
+  /**
+   * Мутация: ручной пересчёт рейтингов
+   */
+  @Mutation(() => Boolean, { description: 'Пересчитать рейтинги вручную' })
+  async recalculateRankings(): Promise<boolean> {
+    const usecase = new CalculateRankingUseCase(this.dataSource);
+    await usecase.execute();
+    return true;
   }
 }

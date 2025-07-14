@@ -1,9 +1,5 @@
-import { InputType, Field, Int, registerEnumType } from '@nestjs/graphql';
-import { FightMethod } from 'infrastructure/database/typeorm/fight.orm-entity';
-
-registerEnumType(FightMethod, {
-  name: 'FightMethod',
-});
+import { InputType, Field, Int } from '@nestjs/graphql';
+import { FightMethod } from '../../../common/enums/fight-method.enum';
 
 @InputType()
 export class RecordFightResultInput {
@@ -22,4 +18,3 @@ export class RecordFightResultInput {
   @Field()
   duration: string;
 }
-

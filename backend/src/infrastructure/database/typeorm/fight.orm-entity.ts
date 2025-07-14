@@ -1,19 +1,8 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { FighterOrm } from './fighter.orm-entity';
 import { EventOrm } from './event.orm-entity';
-
-export enum FightMethod {
-  KO = 'KO',
-  SUBMISSION = 'SUBMISSION',
-  DECISION = 'DECISION',
-  DRAW = 'DRAW',
-}
+import { WeightClassOrm } from './weight-class.orm-entity';
+import { FightMethod } from '../../../common/enums/fight-method.enum';
 
 @Entity('fights')
 export class FightOrm {
@@ -44,4 +33,17 @@ export class FightOrm {
 
   @Column({ nullable: true })
   duration: string;
+
+  @ManyToOne(() => WeightClassOrm)
+  @JoinColumn({ name: 'weight_class_id' })
+  weightClass: WeightClassOrm;
+
+  @Column({ default: false })
+  is_finished: boolean;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
 }

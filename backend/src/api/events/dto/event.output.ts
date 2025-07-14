@@ -1,9 +1,10 @@
-import { ObjectType, Field, Int } from '@nestjs/graphql';
+import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { GraphQLISODateTime } from '@nestjs/graphql';
 
 @ObjectType()
 export class EventOutput {
-  @Field(() => Int)
-  id: number;
+  @Field(() => ID)
+  id: string;
 
   @Field()
   name: string;
@@ -11,6 +12,12 @@ export class EventOutput {
   @Field()
   location: string;
 
-  @Field()
+  @Field(() => GraphQLISODateTime)
   date: Date;
+
+  @Field(() => GraphQLISODateTime)
+  createdAt: Date;
+
+  @Field(() => GraphQLISODateTime)
+  updatedAt: Date;
 }

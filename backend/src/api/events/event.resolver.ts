@@ -25,17 +25,46 @@ export class EventResolver {
       ...input,
       date: new Date(input.date),
     });
-    return saved;
+
+    return {
+      id: saved.id.toString(),
+      name: saved.name,
+      location: saved.location,
+      date: saved.date,
+      createdAt: saved.created_at,
+      updatedAt: saved.updated_at,
+    };
   }
 
   @Query(() => [EventOutput])
   async getEvents(): Promise<EventOutput[]> {
-    return this.eventRepo.find();
+    const events = await this.eventRepo.find();
+    return events.map(e => ({
+      id: e.id.toString(),
+      name: e.name,
+      location: e.location,
+      date: e.date,
+      createdAt: e.created_at,
+      updatedAt: e.updated_at,
+    }));
   }
 
-  @Query(() => EventOutput, { nullable: true })
-  async getEventById(@Args('id') id: number): Promise<EventOutput | null> {
-    return this.eventRepo.findOneBy({ id });
+  @Query(() => EventOutput, { nullable: true, description: 'Получить событие по ID' })
+  async getEventById(
+    @Args('id', { type: () => Int }) id: number,
+  ): Promise<EventOutput | null> {
+    const event = await this.eventRepo.findOneBy({ id });
+
+    if (!event) return null;
+
+    return {
+      id: event.id.toString(),
+      name: event.name,
+      location: event.location,
+      date: event.date,
+      createdAt: event.created_at,
+      updatedAt: event.updated_at,
+    };
   }
 
   @Query(() => [FightOutput])
@@ -56,6 +85,10 @@ export class EventResolver {
       method: f.method,
       round: f.round,
       duration: f.duration,
+      isFinished: f.is_finished,
+      weightClassId: f.weightClass.id,
+      createdAt: f.created_at,
+      updatedAt: f.updated_at,
     }));
   }
 }
