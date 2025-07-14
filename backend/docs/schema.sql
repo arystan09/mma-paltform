@@ -1,3 +1,4 @@
+-- 1. Весовые категории
 CREATE TABLE weight_classes (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
@@ -5,6 +6,7 @@ CREATE TABLE weight_classes (
   max_weight FLOAT NOT NULL
 );
 
+-- 2. Бойцы
 CREATE TABLE fighters (
   id SERIAL PRIMARY KEY,
   full_name VARCHAR(100) NOT NULL,
@@ -13,29 +15,44 @@ CREATE TABLE fighters (
   height FLOAT,
   weight FLOAT,
   team VARCHAR(100),
-  weight_class_id INT REFERENCES weight_classes(id)
+  country VARCHAR(100),
+  reach_cm FLOAT,
+  stance VARCHAR(50),
+  weight_class_id INT REFERENCES weight_classes(id),
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
 );
 
+-- 3. События
 CREATE TABLE events (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   location VARCHAR(100),
-  date DATE NOT NULL
+  date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
 );
 
+-- 4. Enum для метода боя
 CREATE TYPE fight_method AS ENUM ('KO', 'SUBMISSION', 'DECISION', 'DRAW');
 
+-- 5. Бои
 CREATE TABLE fights (
   id SERIAL PRIMARY KEY,
   event_id INT REFERENCES events(id),
   red_corner_id INT REFERENCES fighters(id),
   blue_corner_id INT REFERENCES fighters(id),
   winner_id INT REFERENCES fighters(id),
+  weight_class_id INT REFERENCES weight_classes(id),
   method fight_method,
   round INT,
-  duration VARCHAR(10)
+  duration VARCHAR(10),
+  is_finished BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
 );
 
+-- 6. Рейтинги
 CREATE TABLE rankings (
   id SERIAL PRIMARY KEY,
   fighter_id INT REFERENCES fighters(id),
@@ -44,5 +61,7 @@ CREATE TABLE rankings (
   wins INT DEFAULT 0,
   losses INT DEFAULT 0,
   draws INT DEFAULT 0,
-  last_fight_date DATE
+  rank_position INT,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
 );
