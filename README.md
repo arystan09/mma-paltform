@@ -3,8 +3,6 @@
 A full-featured backend for a mixed martial arts (MMA) platform, designed to manage fighters, events, individual fights, and dynamic rankings.
 Built with **NestJS**, **GraphQL**, **PostgreSQL**, and **Redis**, following **CLEAN Architecture principles**.
 
-> Inspired by Sherdog.com & Tapology.com – ideal for fighter statistics, event management, and rankings.
-
 ---
 
 ## 📌 Project Status
