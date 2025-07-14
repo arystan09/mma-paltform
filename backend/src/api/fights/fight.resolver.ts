@@ -115,6 +115,32 @@ export class FightResolver {
     }));
   }
 
+  @Query(() => [FightOutput])
+  async fightsByEventId(
+    @Args('eventId', { type: () => Int }) eventId: number,
+  ): Promise<FightOutput[]> {
+    const fights = await this.fightRepo.find({
+      where: { event: { id: eventId } },
+      relations: ['event', 'redCorner', 'blueCorner', 'winner', 'weightClass'],
+      order: { created_at: 'ASC' },
+    });
+
+    return fights.map(f => ({
+      id: f.id,
+      eventId: f.event.id,
+      redCornerId: f.redCorner.id,
+      blueCornerId: f.blueCorner.id,
+      winnerId: f.winner?.id ?? undefined,
+      method: f.method ?? undefined,
+      round: f.round ?? undefined,
+      duration: f.duration ?? undefined,
+      isFinished: f.is_finished,
+      weightClassId: f.weightClass?.id ?? null,
+      createdAt: f.created_at,
+      updatedAt: f.updated_at,
+    }));
+  }
+  
   // История боёв бойца
   @Query(() => [FightOutput])
   async fightsByFighterId(

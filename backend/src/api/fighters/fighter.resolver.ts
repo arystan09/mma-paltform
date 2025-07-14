@@ -10,6 +10,7 @@ import { CreateFighterInput } from './dto/create-fighter.input';
 import { UpdateFighterInput } from './dto/update-fighter.input';
 import { FighterOutput } from './dto/fighter.output';
 import { FighterStatsOutput } from './dto/fighter-stats.output';
+import { FightMethod } from 'common/enums/fight-method.enum';
 
 @Resolver(() => FighterOutput)
 @Injectable()
@@ -115,19 +116,54 @@ export class FighterResolver {
         { blueCorner: { id: fighterId } },
       ],
       relations: ['winner'],
+      order: { created_at: 'ASC' },
     });
 
     let wins = 0;
     let losses = 0;
     let draws = 0;
+    let koWins = 0;
+    let submissionWins = 0;
+    let decisionWins = 0;
+
+    const fightIds: number[] = [];
 
     for (const fight of fights) {
-      if (!fight.winner) continue;
-      if (fight.winner.id === fighterId) wins++;
-      else losses++;
+      if (!fight.is_finished) continue;
+
+      fightIds.push(fight.id);
+
+      if (!fight.winner) {
+        draws++;
+        continue;
+      }
+
+      if (fight.winner.id === fighterId) {
+        wins++;
+        if (fight.method === FightMethod.KO) koWins++;
+        if (fight.method === FightMethod.SUBMISSION) submissionWins++;
+        if (fight.method === FightMethod.DECISION) decisionWins++;
+      } else {
+        losses++;
+      }
     }
 
-    return { fighterId, wins, losses, draws };
+    const totalFights = wins + losses + draws;
+    const winRate = totalFights > 0 ? parseFloat(((wins / totalFights) * 100).toFixed(2)) : 0;
+    const lastFightId = fightIds.at(-1);
+
+    return {
+      totalFights,
+      wins,
+      losses,
+      draws,
+      koWins,
+      submissionWins,
+      decisionWins,
+      winRate,
+      lastFightId,
+      fightIds,
+    };
   }
 }
 

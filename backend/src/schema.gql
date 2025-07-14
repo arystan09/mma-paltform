@@ -83,9 +83,15 @@ type FighterOutput {
 }
 
 type FighterStatsOutput {
+  decisionWins: Int!
   draws: Int!
-  fighterId: Int!
+  fightIds: [Int!]!
+  koWins: Int!
+  lastFightId: Int
   losses: Int!
+  submissionWins: Int!
+  totalFights: Int!
+  winRate: Float!
   wins: Int!
 }
 
@@ -107,6 +113,7 @@ type Mutation {
 
 type Query {
   fighterStats(fighterId: Int!): FighterStatsOutput!
+  fightsByEventId(eventId: Int!): [FightOutput!]!
   fightsByFighterId(fighterId: Int!): [FightOutput!]!
   getAllFighters: [FighterOutput!]!
   getAllWeightClasses: [WeightClassOutput!]!
