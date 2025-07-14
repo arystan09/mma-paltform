@@ -93,23 +93,25 @@ type Mutation {
   createEvent(input: CreateEventInput!): EventOutput!
   createFight(input: CreateFightInput!): FightOutput!
   createFighter(input: CreateFighterInput!): FighterOutput!
+  deleteFighter(id: Int!): Boolean!
 
   """Пересчитать рейтинги вручную"""
   recalculateRankings: Boolean!
   recordFightResult(input: RecordFightResultInput!): FightOutput!
+  updateFighter(input: UpdateFighterInput!): FighterOutput!
 }
 
 type Query {
   fighterStats(fighterId: Int!): FighterStatsOutput!
   fightsByFighterId(fighterId: Int!): [FightOutput!]!
+  getAllFighters: [FighterOutput!]!
   getAllWeightClasses: [WeightClassOutput!]!
 
   """Получить событие по ID"""
   getEventById(id: Int!): EventOutput
   getEventFightCard(eventId: Int!): [FightOutput!]!
   getEvents: [EventOutput!]!
-  getFighterById(id: Float!): FighterOutput
-  getFighters: [FighterOutput!]!
+  getFighterById(id: Int!): FighterOutput
   getFights: [FightOutput!]!
   getWeightClassById(id: Int!): WeightClassOutput!
 
@@ -148,6 +150,17 @@ enum StanceType {
   ORTHODOX
   SOUTHPAW
   SWITCH
+}
+
+input UpdateFighterInput {
+  birthDate: String
+  fullName: String
+  height: Int
+  id: Int!
+  nickname: String
+  team: String
+  weight: Int
+  weightClassId: Int
 }
 
 type WeightClassOutput {

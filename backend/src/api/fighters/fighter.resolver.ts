@@ -1,12 +1,15 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
-import { CreateFighterInput } from './dto/create-fighter.input';
-import { FighterOutput } from './dto/fighter.output';
-import { FighterStatsOutput } from './dto/fighter-stats.output';
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { FighterOrm } from 'infrastructure/database/typeorm/fighter.orm-entity';
 import { FightOrm } from 'infrastructure/database/typeorm/fight.orm-entity';
-import { InjectRepository } from '@nestjs/typeorm';
+
+import { CreateFighterInput } from './dto/create-fighter.input';
+import { UpdateFighterInput } from './dto/update-fighter.input';
+import { FighterOutput } from './dto/fighter.output';
+import { FighterStatsOutput } from './dto/fighter-stats.output';
 
 @Resolver(() => FighterOutput)
 @Injectable()
@@ -19,8 +22,11 @@ export class FighterResolver {
     private readonly fightRepo: Repository<FightOrm>,
   ) {}
 
+  // CREATE
   @Mutation(() => FighterOutput)
-  async createFighter(@Args('input') input: CreateFighterInput): Promise<FighterOutput> {
+  async createFighter(
+    @Args('input') input: CreateFighterInput,
+  ): Promise<FighterOutput> {
     const fighter = this.fighterRepo.create({
       ...input,
       birthDate: new Date(input.birthDate),
@@ -30,24 +36,75 @@ export class FighterResolver {
     return mapFighterOrmToOutput(saved);
   }
 
+  //READ
   @Query(() => [FighterOutput])
-  async getFighters(): Promise<FighterOutput[]> {
+  async getAllFighters(): Promise<FighterOutput[]> {
     const fighters = await this.fighterRepo.find({ relations: ['weightClass'] });
     return fighters.map(mapFighterOrmToOutput);
   }
 
   @Query(() => FighterOutput, { nullable: true })
-  async getFighterById(@Args('id') id: number): Promise<FighterOutput | null> {
+  async getFighterById(
+    @Args('id', { type: () => Int }) id: number,
+  ): Promise<FighterOutput | null> {
     const f = await this.fighterRepo.findOne({
       where: { id },
       relations: ['weightClass'],
     });
-
-    if (!f) return null;
-
-    return mapFighterOrmToOutput(f);
+    return f ? mapFighterOrmToOutput(f) : null;
   }
 
+  // UPDATE
+  @Mutation(() => FighterOutput)
+  async updateFighter(
+    @Args('input') input: UpdateFighterInput,
+  ): Promise<FighterOutput> {
+    const fighter = await this.fighterRepo.findOne({
+      where: { id: input.id },
+      relations: ['weightClass'],
+    });
+    if (!fighter) {
+      throw new Error(`Fighter with ID ${input.id} not found`);
+    }
+
+    // применяем обновления
+    Object.assign(fighter, {
+      ...input,
+      birthDate: input.birthDate ? new Date(input.birthDate) : fighter.birthDate,
+    });
+
+    if (input.weightClassId) {
+      fighter.weightClass = { id: input.weightClassId } as any;
+    }
+
+    const updated = await this.fighterRepo.save(fighter);
+    return mapFighterOrmToOutput(updated);
+  }
+
+  // DELETE
+
+  @Mutation(() => Boolean)
+  async deleteFighter(
+    @Args('id', { type: () => Int }) id: number,
+  ): Promise<boolean> {
+    try {
+      await this.fighterRepo.delete(id);
+      return true;
+    } catch (error) {
+      // Проверка на ошибку связей (foreign key)
+      if (
+        error instanceof Error &&
+        error.message.includes('violates foreign key constraint')
+      ) {
+        throw new Error(
+          `Unable to delete fighter with ID ${id} because he participated in battles.`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  // STATS BY FIGHTER
   @Query(() => FighterStatsOutput)
   async fighterStats(
     @Args('fighterId', { type: () => Int }) fighterId: number,
@@ -66,7 +123,6 @@ export class FighterResolver {
 
     for (const fight of fights) {
       if (!fight.winner) continue;
-
       if (fight.winner.id === fighterId) wins++;
       else losses++;
     }
@@ -75,16 +131,17 @@ export class FighterResolver {
   }
 }
 
+// MAPPER 
 function mapFighterOrmToOutput(f: FighterOrm): FighterOutput {
   return {
     id: f.id,
     fullName: f.fullName,
     nickname: f.nickname,
-    birthDate: f.birthDate ? new Date(f.birthDate.toString()) : null,
+    birthDate: f.birthDate,
     height: f.height,
     weight: f.weight,
     team: f.team,
-    weightClassId: f.weightClass?.id ?? 0,
+    weightClassId: f.weightClass?.id ?? null,
     country: f.country ?? undefined,
     reach_cm: f.reach_cm ?? undefined,
     stance: f.stance ?? undefined,
