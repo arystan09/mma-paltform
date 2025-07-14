@@ -93,11 +93,15 @@ type Mutation {
   createEvent(input: CreateEventInput!): EventOutput!
   createFight(input: CreateFightInput!): FightOutput!
   createFighter(input: CreateFighterInput!): FighterOutput!
+
+  """Delete event by ID"""
+  deleteEvent(id: Int!): Boolean!
   deleteFighter(id: Int!): Boolean!
 
   """Пересчитать рейтинги вручную"""
   recalculateRankings: Boolean!
   recordFightResult(input: RecordFightResultInput!): FightOutput!
+  updateEvent(input: UpdateEventInput!): EventOutput!
   updateFighter(input: UpdateFighterInput!): FighterOutput!
 }
 
@@ -150,6 +154,13 @@ enum StanceType {
   ORTHODOX
   SOUTHPAW
   SWITCH
+}
+
+input UpdateEventInput {
+  date: String
+  id: Int!
+  location: String
+  name: String
 }
 
 input UpdateFighterInput {

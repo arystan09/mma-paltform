@@ -6,6 +6,7 @@ import { EventOrm } from 'infrastructure/database/typeorm/event.orm-entity';
 import { FightOrm } from 'infrastructure/database/typeorm/fight.orm-entity';
 
 import { CreateEventInput } from './dto/create-event.input';
+import { UpdateEventInput } from './dto/update-event.input';
 import { EventOutput } from './dto/event.output';
 import { FightOutput } from '../fights/dto/fight.output';
 
@@ -19,6 +20,7 @@ export class EventResolver {
     private readonly fightRepo: Repository<FightOrm>,
   ) {}
 
+  // Создание события
   @Mutation(() => EventOutput)
   async createEvent(@Args('input') input: CreateEventInput): Promise<EventOutput> {
     const saved = await this.eventRepo.save({
@@ -26,54 +28,62 @@ export class EventResolver {
       date: new Date(input.date),
     });
 
-    return {
-      id: saved.id.toString(),
-      name: saved.name,
-      location: saved.location,
-      date: saved.date,
-      createdAt: saved.created_at,
-      updatedAt: saved.updated_at,
-    };
+    return this.toOutput(saved);
   }
 
+  // Получение всех событий
   @Query(() => [EventOutput])
   async getEvents(): Promise<EventOutput[]> {
     const events = await this.eventRepo.find();
-    return events.map(e => ({
-      id: e.id.toString(),
-      name: e.name,
-      location: e.location,
-      date: e.date,
-      createdAt: e.created_at,
-      updatedAt: e.updated_at,
-    }));
+    return events.map(this.toOutput);
   }
 
+  // Получение события по ID
   @Query(() => EventOutput, { nullable: true, description: 'Получить событие по ID' })
-  async getEventById(
-    @Args('id', { type: () => Int }) id: number,
-  ): Promise<EventOutput | null> {
+  async getEventById(@Args('id', { type: () => Int }) id: number): Promise<EventOutput | null> {
     const event = await this.eventRepo.findOneBy({ id });
-
-    if (!event) return null;
-
-    return {
-      id: event.id.toString(),
-      name: event.name,
-      location: event.location,
-      date: event.date,
-      createdAt: event.created_at,
-      updatedAt: event.updated_at,
-    };
+    return event ? this.toOutput(event) : null;
   }
 
+  // Обновление события
+  @Mutation(() => EventOutput)
+  async updateEvent(@Args('input') input: UpdateEventInput): Promise<EventOutput> {
+    const event = await this.eventRepo.findOneBy({ id: input.id });
+    if (!event) throw new Error(`Event with ID ${input.id} not found`);
+
+    Object.assign(event, input);
+    if (input.date) {
+      event.date = new Date(input.date);
+    }
+
+    const updated = await this.eventRepo.save(event);
+    return this.toOutput(updated);
+  }
+
+  // Удаление события
+  @Mutation(() => Boolean, { description: 'Delete event by ID' })
+  async deleteEvent(
+    @Args('id', { type: () => Int }) id: number,
+  ): Promise<boolean> {
+    const relatedFights = await this.fightRepo.count({
+      where: { event: { id } },
+    });
+
+    if (relatedFights > 0) {
+      throw new Error('Unable to delete event: battles are linked to it.');
+    }
+
+    const result = await this.eventRepo.delete(id);
+
+    return result.affected !== 0;
+  }
+
+  // Получение fight card (всех боёв события)
   @Query(() => [FightOutput])
-  async getEventFightCard(
-    @Args('eventId', { type: () => Int }) eventId: number,
-  ): Promise<FightOutput[]> {
+  async getEventFightCard(@Args('eventId', { type: () => Int }) eventId: number): Promise<FightOutput[]> {
     const fights = await this.fightRepo.find({
       where: { event: { id: eventId } },
-      relations: ['event', 'redCorner', 'blueCorner', 'winner'],
+      relations: ['event', 'redCorner', 'blueCorner', 'winner', 'weightClass'],
     });
 
     return fights.map(f => ({
@@ -90,5 +100,16 @@ export class EventResolver {
       createdAt: f.created_at,
       updatedAt: f.updated_at,
     }));
+  }
+
+  private toOutput(event: EventOrm): EventOutput {
+    return {
+      id: event.id.toString(),
+      name: event.name,
+      location: event.location,
+      date: event.date,
+      createdAt: event.created_at,
+      updatedAt: event.updated_at,
+    };
   }
 }

@@ -9,5 +9,5 @@ export class CreateEventInput {
   location: string;
 
   @Field()
-  date: string; // ISO строка
+  date: string;
 }
