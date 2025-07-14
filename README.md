@@ -409,7 +409,10 @@ query {
   }
 }
 ```
+## 🗺️ Entity Relationship Diagram (ERD)
 
+![ERD Diagram](./backend/docs/ERD.png)
+```
 ---
 
 ## 🗃️ Supporting Files
@@ -419,7 +422,6 @@ query {
 | `docs/ERD.png`                 | Entity Relationship Diagram       |
 | `docs/schema.sql`              | SQL DDL: database schema          |
 | `.env.example`                 | Example environment configuration |
-| `ranking.worker.ts`            | Background worker using BullMQ    |
 | `calculate-ranking.usecase.ts` | Ranking calculation logic         |
 
 ---
